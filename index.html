@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#f8d7e5" />
+  <title>Una date contigo</title>
+  <style>
+    :root {
+      --bg-a: #ffd6e8;
+      --bg-b: #fff3f8;
+      --bg-c: #ffe5ef;
+      --card: rgba(255, 255, 255, 0.18);
+      --card-border: rgba(255, 255, 255, 0.35);
+      --text: #7b2d4a;
+      --text-strong: #5c1d37;
+      --accent: #ff5f93;
+      --accent-2: #ff89ad;
+      --accent-soft: #ffe0ea;
+      --shadow: 0 20px 60px rgba(168, 56, 99, 0.22);
+      --btn-shadow: 0 10px 25px rgba(203, 78, 128, 0.22);
+      --success: #fffdfb;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.8) 0 8%, transparent 9%),
+        radial-gradient(circle at 80% 15%, rgba(255,255,255,0.6) 0 7%, transparent 8%),
+        radial-gradient(circle at 55% 78%, rgba(255,255,255,0.45) 0 6%, transparent 7%),
+        linear-gradient(160deg, var(--bg-a), var(--bg-b) 45%, var(--bg-c));
+      font-family: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      touch-action: manipulation;
+      overscroll-behavior: none;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding:
+        max(12px, env(safe-area-inset-top))
+        max(12px, env(safe-area-inset-right))
+        max(12px, env(safe-area-inset-bottom))
+        max(12px, env(safe-area-inset-left));
+    }
+
+    .scene {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .heart, .spark {
+      position: absolute;
+      inset: auto;
+      display: block;
+      will-change: transform, opacity;
+    }
+
+    .heart {
+      color: rgba(255, 106, 149, 0.7);
+      font-size: 18px;
+      filter: drop-shadow(0 3px 8px rgba(255, 100, 150, 0.15));
+      animation: floatUp linear infinite;
+    }
+
+    .heart::before {
+      content: "♥";
+    }
+
+    .spark {
+      width: 3px;
+      height: 3px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 0 8px rgba(255,255,255,0.85), 0 0 16px rgba(255, 140, 185, 0.55);
+      animation: sparkle linear infinite;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translate3d(0, 110vh, 0) scale(var(--scale));
+        opacity: 0;
+      }
+      10% { opacity: 1; }
+      100% {
+        transform: translate3d(var(--drift), -15vh, 0) scale(calc(var(--scale) * 1.15));
+        opacity: 0;
+      }
+    }
+
+    @keyframes sparkle {
+      0% {
+        transform: translate3d(0, 105vh, 0) scale(0.4);
+        opacity: 0;
+      }
+      15% { opacity: 1; }
+      100% {
+        transform: translate3d(var(--drift), -20vh, 0) scale(1.4);
+        opacity: 0;
+      }
+    }
+
+    .app {
+      position: relative;
+      z-index: 2;
+      width: min(92vw, 430px);
+      padding: 12px;
+    }
+
+    .card {
+      position: relative;
+      border: 1px solid var(--card-border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.33), rgba(255,255,255,0.18));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px) saturate(120%);
+      -webkit-backdrop-filter: blur(18px) saturate(120%);
+      border-radius: 30px;
+      padding: clamp(22px, 5.2vw, 28px) clamp(16px, 4.4vw, 20px) clamp(18px, 4.8vw, 22px);
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40% -20% auto;
+      height: 220px;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.38), transparent 60%);
+      transform: rotate(-8deg);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255,255,255,0.45);
+      color: var(--text-strong);
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .badge span {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff8eb5, #ff5f93);
+      color: white;
+      box-shadow: 0 8px 18px rgba(255, 95, 147, 0.25);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--text-strong);
+      font-size: clamp(1.55rem, 6vw, 2.15rem);
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+    }
+
+    p {
+      margin: 10px 0 0;
+      font-size: clamp(0.9rem, 3.5vw, 0.98rem);
+      line-height: 1.48;
+      color: rgba(92, 29, 55, 0.82);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      min-height: 48px;
+      border-radius: 16px;
+      padding: 13px 16px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .yes-btn {
+      color: white;
+      background: linear-gradient(135deg, #ff5f93, #ff88ae);
+      box-shadow: var(--btn-shadow);
+    }
+
+    .yes-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .no-btn {
+      color: var(--text-strong);
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(255, 175, 201, 0.7);
+      box-shadow: 0 10px 20px rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(83, 15, 36, 0.26);
+      backdrop-filter: blur(7px);
+      -webkit-backdrop-filter: blur(7px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 20;
+      padding: 18px;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      width: min(92vw, 350px);
+      background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,246,249,0.96));
+      border-radius: 28px;
+      padding: clamp(20px, 5vw, 22px) clamp(16px, 4.2vw, 18px) clamp(16px, 4.2vw, 18px);
+      box-shadow: 0 24px 80px rgba(100, 24, 52, 0.28);
+      border: 1px solid rgba(255,255,255,0.75);
+      text-align: center;
+      transform: translateY(18px) scale(0.96);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-backdrop.open .modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal .emoji {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .modal h2 {
+      margin: 0;
+      color: var(--text-strong);
+      font-size: clamp(1.35rem, 5.6vw, 1.5rem);
+    }
+
+    .modal .modal-message {
+      margin-top: 8px;
+      min-height: 40px;
+      color: rgba(92, 29, 55, 0.84);
+      font-size: clamp(0.92rem, 3.6vw, 0.96rem);
+      line-height: 1.42;
+    }
+
+    .modal-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .modal-yes {
+      background: linear-gradient(135deg, #ff9cbf, #ff7ea8);
+      color: white;
+    }
+
+    .modal-no {
+      background: white;
+      color: var(--text-strong);
+      border: 1px solid rgba(255, 150, 186, 0.6);
+    }
+
+    .success-screen {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255,255,255,0.25), transparent 36%),
+        linear-gradient(180deg, rgba(255, 191, 213, 0.55), rgba(255, 242, 247, 0.7));
+      overflow: hidden;
+    }
+
+    .success-screen.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .success-card {
+      width: min(92vw, 380px);
+      padding: clamp(22px, 5.2vw, 26px) clamp(18px, 4.8vw, 22px);
+      text-align: center;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: 0 26px 90px rgba(155, 40, 82, 0.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateY(8px);
+      animation: popIn 0.7s cubic-bezier(.17,.84,.24,1.15) forwards;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.92);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .success-card .big-heart {
+      font-size: 3rem;
+      line-height: 1;
+      margin-bottom: 10px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .success-card h2 {
+      margin: 0;
+      color: var(--text-strong);
+      font-size: clamp(1.55rem, 5.8vw, 2.15rem);
+      line-height: 1.14;
+    }
+
+    .success-card p {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: rgba(92, 29, 55, 0.88);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 9px;
+      height: 14px;
+      border-radius: 999px;
+      opacity: 0;
+      animation: confettiFly 1.8s ease-out forwards;
+      transform-origin: center;
+    }
+
+    .confetti.heart {
+      width: auto;
+      height: auto;
+      background: transparent;
+      font-size: 18px;
+      color: var(--accent);
+      filter: drop-shadow(0 4px 10px rgba(255, 95, 147, 0.35));
+    }
+
+    @keyframes confettiFly {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 0, 0) scale(0.4) rotate(0deg);
+      }
+      10% { opacity: 1; }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--x), var(--y), 0) scale(1.05) rotate(var(--r));
+      }
+    }
+
+    .screen-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 29;
+      background: radial-gradient(circle at center, rgba(255,255,255,0.72), transparent 55%);
+      opacity: 0;
+    }
+
+    .screen-flash.burst {
+      animation: flash 0.75s ease-out;
+    }
+
+    @keyframes flash {
+      0% { opacity: 0; }
+      18% { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+
+    .fade-out {
+      animation: fadeOut 0.35s ease forwards;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateY(10px) scale(0.96); }
+    }
+
+    @media (max-width: 380px) {
+      .app {
+        width: 100vw;
+        padding: 4px;
+      }
+
+      .card {
+        padding: 20px 14px 16px;
+        border-radius: 26px;
+      }
+
+      .buttons,
+      .modal-buttons {
+        gap: 10px;
+      }
+
+      .badge {
+        margin-bottom: 12px;
+        padding: 8px 12px;
+      }
+
+      .success-card p {
+        font-size: 0.94rem;
+      }
+    }
+
+    @media (max-height: 700px) {
+      .card {
+        padding-top: 18px;
+        padding-bottom: 16px;
+      }
+
+      .badge {
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        font-size: clamp(1.4rem, 5.8vw, 1.95rem);
+      }
+
+      p {
+        margin-top: 8px;
+      }
+
+      .buttons {
+        margin-top: 14px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" aria-hidden="true" id="scene"></div>
+  <div class="screen-flash" id="flash"></div>
+
+  <main class="app" id="app">
+    <section class="card" id="mainCard" aria-label="Invitación romántica">
+      <div class="badge"><span>♡</span>Invitación especial</div>
+      <h1>¿Quieres tener una date conmigo el sábado?</h1>
+      <p>Prometo una noche bonita, risas suaves y mucho encanto.</p>
+
+      <div class="buttons">
+        <button class="yes-btn" id="mainYes" type="button">Sí</button>
+        <button class="no-btn" id="mainNo" type="button">No</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="emoji">🥺💗</div>
+      <h2 id="modalTitle">¿Segura?</h2>
+      <div class="modal-message" id="modalMessage">Todavía podemos convertir este “No” en algo mucho más lindo.</div>
+      <div class="modal-buttons">
+        <button class="modal-yes" id="modalYes" type="button">Sí</button>
+        <button class="modal-no" id="modalNo" type="button">No</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="success-screen" id="successScreen" aria-live="polite" aria-hidden="true">
+    <div class="success-card">
+      <div class="big-heart">🤍✨</div>
+      <h2>¡Muy bien, hermosa! Ya tenemos una date el sábado.</h2>
+      <p>Te espero para una cita inolvidable.</p>
+    </div>
+  </section>
+
+  <script>
+    const scene = document.getElementById('scene');
+    const flash = document.getElementById('flash');
+    const mainCard = document.getElementById('mainCard');
+    const mainYes = document.getElementById('mainYes');
+    const mainNo = document.getElementById('mainNo');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalYes = document.getElementById('modalYes');
+    const modalNo = document.getElementById('modalNo');
+    const modalMessage = document.getElementById('modalMessage');
+    const successScreen = document.getElementById('successScreen');
+
+    const modalMessages = [
+      'Piénsalo tantito... una date bonita no se dice que no así de fácil.',
+      'Prometo ser más lindo que cualquier excusa.',
+      '¿De verdad quieres dejar pasar esto? 🥺',
+      'Última oportunidad para decir que sí con estilo.'
+    ];
+
+    let modalAttempts = 0;
+    let celebrationStarted = false;
+
+    function createFloatingLayer() {
+      const totalHearts = 24;
+      const totalSparks = 18;
+
+      for (let i = 0; i < totalHearts; i++) {
+        const heart = document.createElement('i');
+        heart.className = 'heart';
+        heart.style.left = Math.random() * 100 + 'vw';
+        heart.style.animationDuration = 7 + Math.random() * 9 + 's';
+        heart.style.animationDelay = -(Math.random() * 12) + 's';
+        heart.style.setProperty('--drift', (Math.random() * 120 - 60) + 'px');
+        heart.style.setProperty('--scale', (0.55 + Math.random() * 1.1).toFixed(2));
+        heart.style.opacity = (0.25 + Math.random() * 0.5).toFixed(2);
+        heart.style.top = '0';
+        scene.appendChild(heart);
+      }
+
+      for (let i = 0; i < totalSparks; i++) {
+        const spark = document.createElement('i');
+        spark.className = 'spark';
+        spark.style.left = Math.random() * 100 + 'vw';
+        spark.style.animationDuration = 8 + Math.random() * 7 + 's';
+        spark.style.animationDelay = -(Math.random() * 10) + 's';
+        spark.style.setProperty('--drift', (Math.random() * 100 - 50) + 'px');
+        spark.style.top = '0';
+        scene.appendChild(spark);
+      }
+    }
+
+    function openModal() {
+      modalBackdrop.classList.add('open');
+      modalBackdrop.setAttribute('aria-hidden', 'false');
+      modalMessage.textContent = modalMessages[modalAttempts % modalMessages.length];
+      modalYes.textContent = modalAttempts < 2 ? 'Sí' : 'Sí, pero...';
+      modalNo.textContent = modalAttempts < 2 ? 'No' : 'Bueno, sí';
+      modalAttempts += 1;
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove('open');
+      modalBackdrop.setAttribute('aria-hidden', 'true');
+    }
+
+    function createBurst(x, y, amount) {
+      const colors = ['#ff5f93', '#ff86ad', '#ffd3e2', '#ffffff', '#ffb7cc'];
+      for (let i = 0; i < amount; i++) {
+        const piece = document.createElement('span');
+        const isHeart = i % 5 === 0;
+        piece.className = isHeart ? 'confetti heart' : 'confetti';
+        if (isHeart) {
+          piece.textContent = '♥';
+        } else {
+          piece.style.background = colors[i % colors.length];
+        }
+        piece.style.left = x + 'px';
+        piece.style.top = y + 'px';
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 80 + Math.random() * 120;
+        piece.style.setProperty('--x', Math.cos(angle) * radius + 'px');
+        piece.style.setProperty('--y', Math.sin(angle) * radius + 'px');
+        piece.style.setProperty('--r', (Math.random() * 700 - 350) + 'deg');
+        piece.style.animationDelay = (Math.random() * 0.12) + 's';
+        piece.style.transform = 'translate3d(0, 0, 0)';
+        successScreen.appendChild(piece);
+        setTimeout(() => piece.remove(), 2200);
+      }
+    }
+
+    function createFireworks() {
+      const bursts = [
+        { x: window.innerWidth * 0.22, y: window.innerHeight * 0.24, n: 24 },
+        { x: window.innerWidth * 0.78, y: window.innerHeight * 0.24, n: 24 },
+        { x: window.innerWidth * 0.48, y: window.innerHeight * 0.42, n: 28 },
+        { x: window.innerWidth * 0.68, y: window.innerHeight * 0.64, n: 20 },
+        { x: window.innerWidth * 0.32, y: window.innerHeight * 0.63, n: 20 }
+      ];
+
+      bursts.forEach((burst, index) => {
+        setTimeout(() => createBurst(burst.x, burst.y, burst.n), index * 160);
+      });
+    }
+
+    function celebrate() {
+      if (celebrationStarted) return;
+      celebrationStarted = true;
+
+      mainCard.classList.add('fade-out');
+      setTimeout(() => {
+        mainCard.classList.add('hidden');
+      }, 320);
+
+      closeModal();
+      successScreen.classList.add('active');
+      successScreen.setAttribute('aria-hidden', 'false');
+      flash.classList.remove('burst');
+      void flash.offsetWidth;
+      flash.classList.add('burst');
+      createFireworks();
+      setTimeout(createFireworks, 820);
+      setTimeout(createFireworks, 1560);
+    }
+
+    mainNo.addEventListener('click', openModal);
+    mainYes.addEventListener('click', celebrate);
+
+    modalYes.addEventListener('click', () => {
+      modalMessage.textContent = modalMessages[modalAttempts % modalMessages.length];
+      const modalCard = modalBackdrop.querySelector('.modal');
+      modalCard.animate(
+        [
+          { transform: 'translateY(0) scale(1)' },
+          { transform: 'translateY(-4px) scale(1.02)' },
+          { transform: 'translateY(0) scale(1)' }
+        ],
+        { duration: 260, easing: 'ease-out' }
+      );
+      const shake = modalBackdrop.querySelector('.modal');
+      shake.animate(
+        [
+          { transform: 'translateX(0)' },
+          { transform: 'translateX(-7px)' },
+          { transform: 'translateX(7px)' },
+          { transform: 'translateX(-5px)' },
+          { transform: 'translateX(5px)' },
+          { transform: 'translateX(0)' }
+        ],
+        { duration: 320, easing: 'ease-in-out' }
+      );
+      modalAttempts += 1;
+      modalMessage.textContent = modalAttempts < 2
+        ? 'Todavía no te dejo escapar tan fácil. ¿Segura?'
+        : 'Eso no cuenta. Tu corazón ya sabe la respuesta.';
+      modalYes.textContent = modalAttempts < 3 ? 'Sí' : 'Sí, pero...';
+      modalNo.textContent = modalAttempts < 3 ? 'No' : 'Bueno, sí';
+    });
+
+    modalNo.addEventListener('click', celebrate);
+
+    modalBackdrop.addEventListener('click', (event) => {
+      if (event.target === modalBackdrop) {
+        openModal();
+      }
+    });
+
+    createFloatingLayer();
+  </script>
+</body>
+</html>
